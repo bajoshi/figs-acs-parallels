@@ -9,7 +9,7 @@ import glob
 import shutil
 
 home = os.getenv('HOME')  # Does not have a trailing slash at the end
-acs_home = home + '/Desktop/FIGS/axe_notes_routines/'
+acs_home = home + '/Desktop/FIGS/figs-acs-parallels/'
 
 def get_unique_filters(fits_path):
     filterlist = []
@@ -38,7 +38,7 @@ def create_lists(field, field_posangs, field_idx, posang_list, visit_id_list, fi
 
         # Save filename pairs into files
         fh_direct = open(acs_home + 'f606w_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
-        fh_grism = open(acs_home + 'G800l_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
+        fh_grism = open(acs_home + 'g800l_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
 
         for filename in filename_list[field_idx][mat_idx]:
 
