@@ -1,0 +1,143 @@
+########## Notes ##########
+
+1. ACS WFC zero points change depending on the observation date. This needs to be taken in to account.
+You will probably have to pass this parameter on the command line when you call SExtractor. But first you need a way to save these for all the observation dates for FIGS.
+2. For G800L, is there a shift in the 1st order spectrum from where the direct image is, like there is for G102 and G141? 
+--> This affects the task iolprep parameter dimension_in (and maybe other tasks too). It tells iolprep "the region (in units of pixels) outside the input image FoV which should be taken into account. This is important since for WFC3 IR G102 and G141 grism spectroscopy the +1st order spectrum is not located at the projected position of the object, but rather shifted to increasing x pixel position (see Fig. 5)." -- From the WFC3 cookbook.
+
+# Astroconda notes
+
+1. Created an environment with name iraf27 that has iraf and pyraf in it. Left the default environment (i.e. astroconda) as it is i.e. without iraf.
+Look here for more details --> http://astroconda.readthedocs.io/en/latest/installation.html
+To activate environment do
+>>> source activate iraf27
+
+######## Commands that worked ########
+
+# you will have to do the reduction in the iraf27 environment
+# (see anaconda and astroconda documentation if you've forgotten what that means)
+# this environment came with pyraf
+# the default astroconda environment was left as it originally was
+
+# 1. sextractor also added to iraf27 environment
+# 2. pydrizzle also added to iraf27 environment
+
+# to be safe, do not run any task more than once. This is especially important for aXe related tasks.
+
+# In your .cshrc
+setenv AXE_IMAGE_PATH /Users/baj/Documents/acs_parallels_data/flc/DATA
+setenv AXE_CONFIG_PATH /Users/baj/Documents/acs_parallels_data/flc/CONF
+setenv AXE_OUTPUT_PATH /Users/baj/Documents/acs_parallels_data/flc/OUTPUT
+setenv AXE_DRIZZLE_PATH /Users/baj/Documents/acs_parallels_data/flc/DRIZZLE
+
+# Or in .bashrc
+export AXE_IMAGE_PATH=/Users/baj/acspar/DATAexport AXE_CONFIG_PATH=/Users/baj/acspar/CONFexport AXE_OUTPUT_PATH=/Users/baj/acspar/OUTPUTexport AXE_DRIZZLE_PATH=/Users/baj/acspar/DRIZZLE
+
+don't forget to source .bashrc or .cshrc afterwards
+
+# run pyraf only from home directory
+# then cd in to IMDRIZZLE
+# I have been exiting pyraf and restarting it after every iraf related task
+# The old login__old.cl is still around. This old one was generated before I installed the iraf27 environment with conda.
+# It used to set the term to xgterm which got pyraf started but couldn't work with stsdas
+# The new one (which I got after I ran mkiraf with the new iraf27 environment installed) 
+# was trying to set the term to xterm-256color and it couldn't get pyraf started.
+# Once I changed that line to set it to xgterm it could start pyraf and now also works with stsdas. 
+# I think the difference between the two files now is at the end. The old one contains some commands that the new one doesn't.
+
+# astrodrizzle
+
+# do the steps listed for astrodrizzle in the WFC3 cookbook 
+>>> astrodrizzle.AstroDrizzle('@F814W.lis',output='F814W',build=yes)
+
+# SExtractor
+
+# this has also been installed in the iraf27 environment (which was the environment with pyraf)
+# first separate the science and weight extensions of the fits file as shown in the WFC3 cookbook 
+# look up magnitude zero points here --
+# For WFC3 -- http://www.stsci.edu/hst/wfc3/phot_zp_lbn
+# For ACS -- http://www.stsci.edu/hst/acs/analysis/zeropoints
+# You will have to look at the science extension header keywords PHOTFLAM and PHOTPLAM to get the ABMAG zero point 
+# ABMAG_ZEROPOINT=-2.5 Log(PHOTFLAM)-5 Log(PHOTPLAM)-2.408
+# More header keyword info here for ACS -- http://www.stsci.edu/hst/acs/documents/handbooks/currentDHB/acs_Ch25.html
+# For F814W
+# PHOTFLAM = 7.0073061e-20
+# PHOTPLAM = 8059.3491
+# therefore, ABmag zero point is 25.9466
+>>> sex -c config.txt -WEIGHT_IMAGE F814W_drc_GS1_99_wht.fits -MAG_ZEROPOINT 25.9466 -CATALOG_NAME F814W.cat F814W_drc_GS1_99_sci.fits
+
+# iolprep
+
+# before running iolprep change the MAG_AUTO keyword in the SExtractor catalog to MAG_F8059 (because 8059 is the pivot wavelength for F814W)
+# rename the new cat file to F814W_prep.cat
+### The following files exist in both folders -- acspar/ and IMDRIZZLE/
+# F814W_dr_GS1_99_sci.fits
+# F814W_dr_GS1_99_wht.fits
+# F814W.cat
+# F814W_prep.cat
+# I did this to keep the SExtractor config, param, etc files separate from the IMDRIZZLE folder.
+>>> iolprep F814W_drc.fits F814W_prep.cat dimension_in='100,0,0,0' useMdriz=no
+
+# axeprep
+
+# before axeprep, your input image list has to be in the format given here
+# http://axe.stsci.edu/axe/manual/html/Manual.html
+# in section 7.3
+# i.e. look carefully at the format; make sure that the catalogs are separated by commas and the rest by spaces
+
+# also before running, all the grism images, direct images, and the catalogs from iolprep
+# should be in the DATA folder
+# In this case, run the following commands --
+>>> cd /Users/baj/acspar/DATA/
+>>> cp ../SAVE/*.fits .
+>>> cp ../IMDRIZZLE/j*.cat .
+# see step 3 in section 4.5 in the WFC3 cookbook
+
+# run this command while in the acspar directory
+_________________________________________________
+# It stopped working here on the second reduction run
+
+
+>>> axeprep inlist='G800L_GS1_99.lis' configs='ACS.WFC.CHIP1.Cycle13.5.conf,ACS.WFC.CHIP2.Cycle13.5.conf' backgr='yes' backims='ACS.WFC.CHIP1.msky.1.fits,ACS.WFC.CHIP2.msky.1.fits' norm='no'
+
+# axecore
+
+>>> axecore inlist='G800L_GS1_99.lis' configs='ACS.WFC.CHIP1.Cycle13.5.conf,ACS.WFC.CHIP2.Cycle13.5.conf' back='no' extrfwhm=4.0 drzfwhm=3.0 backfwhm=0.0 exclude='no' slitless_geom='yes' cont_model='gauss' sampling='drizzle'
+
+# drzprep
+
+>>> drzprep inlist='G800L_GS1_99.lis' configs='ACS.WFC.CHIP1.Cycle13.5.conf,ACS.WFC.CHIP2.Cycle13.5.conf' back='no'
+
+# axedrizzle
+
+>>> axedrizzle inlist='G800L_GS1_99.lis' configs='ACS.WFC.CHIP1.Cycle13.5.conf,ACS.WFC.CHIP2.Cycle13.5.conf' infwhm=4.0 outfwhm=3.0 back='no' makespc='yes' driz_separate='no'
+
+
+# axe2web
+
+# installed using 
+# python setup.py install --prefix=/Users/baj/acspar/visualization/
+
+# after install was done
+# copied the executable from the bin/ folder in visualization/ to one level up in visualization/
+
+# also added the following to path in .cshrc
+# /Users/baj/acspar/visualization/lib/python2.7/site-packages
+# not sure if this helped
+
+# Changed axe2web code in 
+# /Users/baj/acspar/visualization/lib/python2.7/site-packages/aXe2html/irafims/irafimtools.py
+# and also in
+# /Users/baj/Documents/Ureka/variants/common/lib/python2.7/site-packages/aXe2html/irafims/implotmaker.py
+# On line 365 changed -- if ihead.has_key('CONTAM')
+# to
+# if 'CONTAM' in ihead
+# has_key is a deprecated function and is no longer supported/existent
+
+# made a similar change in 
+# /Users/baj/Documents/Ureka/variants/common/lib/python2.7/site-packages/aXe2html/utils/fitsslicer.py
+# On line 76
+
+>>> axe2web --parfile axe2web_figs_acs.par
+
+

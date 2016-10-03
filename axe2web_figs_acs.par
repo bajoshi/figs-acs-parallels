@@ -1,0 +1,17 @@
+#------------------------------------------------------------
+# 
+# Parameter file for FIGS GS1 ACS parallel with PA 99
+#
+pagename = figs_gs1_99_acspar
+direct_image = F814_GS1_99_drc_sci.fits 
+stamp_image = aXedrizzle_2.STP.fits 
+spectr_table = aXedrizzle_2.SPC.fits
+sextract_cat = test_prep.cat 
+sort_column = MAG_F8057
+page_header="FIGS ACS PARALLEL -- GS1 PA99"
+pagesize=50
+error_bars=yes
+mark_sources=yes
+outputpath=web_pages
+lambda_range=6000,9500
+#------------------------------------------------------------
