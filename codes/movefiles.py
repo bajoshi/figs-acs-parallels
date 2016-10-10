@@ -8,7 +8,11 @@ acs_home = home + '/Desktop/FIGS/figs-acs-parallels/'
 
 if __name__ == '__main__':
 
-    imdriz = home + '/acspar/IMDRIZZLE/'
+    # Change these two variables below depending on the field and PA you are working with.
+    field = '_gs1'
+    posang = '_28'
+
+    imdriz = home + '/acspar/IMDRIZZLE' + field + posang + '/'
     savdir = os.getenv('AXE_SAVEDIR_PATH') + '/'
     datadir = "/Volumes/Bhavins_backup/acs_parallels_data/flc/"
     listdir = acs_home
@@ -21,18 +25,16 @@ if __name__ == '__main__':
     # This is for the direct image files list
     
     filt = 'f814w'
-    field = '_gs1'
-    posang = '_28'
     
     fh = open(listdir + filt + field + posang + '.lis', 'r')
     
     for file in fh.read().splitlines():
-        print "Copying direct image", file, "from FLC directory to IMDRIZZLE"#and SAVE"
+        print "Copying direct image", file, "from FLC directory to IMDRIZZLE and SAVE"
         shutil.copy(datadir + file, imdriz + file) # source is first arg and destination is second
-        #shutil.copy(datadir + file, savdir + file)
+        shutil.copy(datadir + file, savdir + file)
     
-    #shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + '.lis')
-    #print "\n"
+    shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + '.lis')
+    print "\n"
     # this second copy line is required because the combined drizzled image will be made in the IMDRIZZLE folder
     
     # --------------------------------------------
@@ -40,8 +42,6 @@ if __name__ == '__main__':
     # These need to be copied to SAVE but not to IMDRIZZLE. IMDRIZZLE only needs the direct image files
     
     filt = 'g800l'
-    field = '_gs1'
-    posang = '_28'
     
     fh = open(listdir + filt + field + posang + '.lis', 'r')
     

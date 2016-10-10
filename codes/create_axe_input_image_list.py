@@ -9,29 +9,6 @@ import sys
 home = os.getenv('HOME')  # Does not have a trailing slash at the end
 acs_home = home + '/Desktop/FIGS/figs-acs-parallels/'
 
-def dummy():
-    # First read in teh original .lis files
-    direct_lis = np.loadtxt(acs_home + 'f814w_gs1_28.lis', dtype=np.str)
-    grism_lis = np.loadtxt(acs_home + 'g800l_gs1_28.lis', dtype=np.str)
-
-    fh = open(acs_home + 'iil_gs1_28.lis', 'wa')
-
-    count = 0
-    for file in grism_lis:
-
-        file_gr = file
-        file_dir = direct_lis[count]
-
-        fh.write(file_gr + ',' + file_dir.replace('.fits','') + '_1.cat' +  ',' + file_dir.replace('.fits','') + '_2.cat' +  ',' + file_dir + '\n')
-        count += 1
-
-        if count == len(direct_lis):
-            count = 0
-
-    fh.close()
-
-    return None
-
 if __name__ == '__main__':
     
     datadir = '/Volumes/Bhavins_backup/acs_parallels_data/flc/'
@@ -40,7 +17,7 @@ if __name__ == '__main__':
     direct_lis = np.loadtxt(acs_home + 'f814w_gs1_28.lis', dtype=np.str)
     grism_lis = np.loadtxt(acs_home + 'g800l_gs1_28.lis', dtype=np.str)
 
-    fh = open(acs_home + 'input_image_lists/' + 'iil_gs1_28.lis', 'wa')
+    fh = open(acs_home + 'input_image_lists/' + 'gs1_28.lis', 'wa')
 
     for file_dir in direct_lis:
         for file_gr in grism_lis:

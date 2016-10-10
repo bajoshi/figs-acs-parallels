@@ -31,7 +31,10 @@ setenv AXE_OUTPUT_PATH /Users/baj/Documents/acs_parallels_data/flc/OUTPUT
 setenv AXE_DRIZZLE_PATH /Users/baj/Documents/acs_parallels_data/flc/DRIZZLE
 
 # Or in .bashrc
-export AXE_IMAGE_PATH=/Users/baj/acspar/DATAexport AXE_CONFIG_PATH=/Users/baj/acspar/CONFexport AXE_OUTPUT_PATH=/Users/baj/acspar/OUTPUTexport AXE_DRIZZLE_PATH=/Users/baj/acspar/DRIZZLE
+export AXE_IMAGE_PATH=/Users/baj/acspar/DATA
+export AXE_CONFIG_PATH=/Users/baj/acspar/CONF
+export AXE_OUTPUT_PATH=/Users/baj/acspar/OUTPUT
+export AXE_DRIZZLE_PATH=/Users/baj/acspar/DRIZZLE
 
 don't forget to source .bashrc or .cshrc afterwards
 
@@ -68,7 +71,7 @@ don't forget to source .bashrc or .cshrc afterwards
 
 # iolprep
 
-# before running iolprep change the MAG_AUTO keyword in the SExtractor catalog to MAG_F8059 (because 8059 is the pivot wavelength for F814W)
+# before running iolprep change the MAG_AUTO keyword in the SExtractor catalog to MAG_F0805 (because 8059 is the pivot wavelength for F814W and the number after the F should be in nanometers)
 # rename the new cat file to F814W_prep.cat
 ### The following files exist in both folders -- acspar/ and IMDRIZZLE/
 # F814W_dr_GS1_99_sci.fits

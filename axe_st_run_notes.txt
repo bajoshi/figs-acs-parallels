@@ -3,35 +3,46 @@
 The first thing you should do before you start doing any serious reduction on your data is to make sure that axe works as expected on your computer. This means going through all the necessary steps in your workflow.
 While you are going through the steps here in order to check if you have axe running you should probably run axecore only a single image and include only perhaps a couple objects in the direct image catalog to speed things up.
 
-Workflow for the FIGS ACS parallels data -
-1. Create lists of matching grism and direct image pairs.
-i.e. find the matching G800L and F814W pairs
- and find the matching G800L and F606W pairs
- and find the matching G800L and F435W pairs
+In these notes, the username is always bhavinjoshi or baj. Change it according to whatever it is on your system.
 
-Although, F435W is probably not as important as the other two. This is because the F435W filter (B band) has no overlap with the G800L grism wavelength coverage. So its not going to be useful when estimating contamination using FCUBEPREP. The output products from FCUBEPREP are used by axecore and the contamination estimate is eventually written out in the PET fits file.
+----------------------------------------------------------------------------------------------------------------
+############## ANACONDA ##############
+If you have any older versions of scisoft, Ureka, or iraf on your computer -- remove them! 
+If you set up anaconda with environments then you should remove anaconda too and reinstall it. Now just install all packages in the "root" environment i.e. you shouldn't have to source activate anything. 
 
-2. Put in the appropriate environment variables in your .bash_profile or .profile file in your home folder. 
+0. If you have an older version of anaconda with environments set up then do --
+>> cd
+>> rm -fr anaconda
+(this takes a while. Its a big folder with many files.)
 
-3. Create the required directory structure. Only create CONF and SAVE by hand. 
-The rest of the folders i.e. DRIZZLE, IMDRIZZLE, DATA, and OUTPUT will be field and position angle (PA) specific. So, name them (create and name them using your script that calls the axe tasks) in a way that tells you the field and PA. For example, for the parallel ACS field to GS1 PA28 I named my DATA folder DATA_gs1_28 and so on. Keep in mind that your Python script that calls axe tasks will have to change the environment variables to these specific names when you run it for a particular field and PA. 
-
-4. Cross your fingers and hope that the mess on this step works! lol
-
-Make sure you have all the prerequiste software. It is preferable to use a single package manager. I used conda from anaconda.
-After you have anaconda installed using the graphical installer. Get the Python 2.7 version.
-
+To install anaconda and the relevant packages --
+1. Get the graphical installer with Python 2.7 and run it.
+2. Then do --
 >> conda config --add channels http://ssb.stsci.edu/astroconda
 >> conda install iraf pyraf stsci
+(this also takes a while.)
 
 Add the following lines to your .bash_profile or .profile file in your home folder.
+export iraf=/Users/baj/anaconda/iraf/
+export IRAFARCH=macosx
+# irafarch could be macintel or something else depending on where conda put the axe executables. Check the directory structure in /Users/bhavinjoshi/anaconda/variants/common/iraf/stsci_iraf/stsdas/
+export UR_DIR_PKG=/Users/baj/anaconda/variants/common/
+----------------------------------------------------------------------------------------------------------------
 
-export iraf=/Users/bhavinjoshi/anaconda/iraf/
-export IRAFARCH=macosx 
-# This could be macintel or something else depending on where conda put the axe executables. Check the directory structure in /Users/bhavinjoshi/anaconda/variants/common/iraf/stsci_iraf/stsdas/
-export UR_DIR_PKG=/Users/bhavinjoshi/anaconda/variants/common/
+----------------------------------------------------------------------------------------------------------------
+############## OTHER PREREQUISTES ##############
+Before you begin the workflow --- 
+Cross your fingers and hope that the mess on this step works! lol
 
-aXe also depends on the GNU scientific library (GSL). You will need to install GSL if you don't have it already. On my computer aXe does not like to work with GSL version >= 2. So I've installed GSL version 1.9.
+1. Make sure you have all the prerequiste software. It is preferable to use a single package manager. I used conda from anaconda.
+See steps above to install anaconda and pyraf.
+
+2. You will also need SExtractor and pydrizzle which do not come with the anaconda pyraf stsci install by default. You can get them by doing --
+>> cd
+>> conda install sextractor
+>> conda install pydrizzle
+
+3. aXe also depends on the GNU scientific library (GSL). You will need to install GSL if you don't have it already. On my computer aXe does not like to work with GSL version >= 2. So I've installed GSL version 1.9.
 To install GSL --
 a. Get the GSL *.tar.gz file from the GSL website and untar it.
 b. Put the untarred folder in your home directory (you can put it in any other place if you like).
@@ -43,8 +54,10 @@ c. Run the following commands to install GSL --
 >> ./configure prefix=/Users/bhavinjoshi/gsl19
 >> make
 >> make install
+(these steps to compile gsl will take a little time.)
 
-Now, compile the axe executables with the compiled GSL version. The axe source code is in a folder called ccc in the home folder. 
+4. Now, compile the axe executables with the compiled GSL version. The axe source code is in a folder called ccc in the home folder. 
+(I have not been able to compile the axe source code again. I simply copied and used the compiled binaries from my laptop which were compiled with gsl 1.9)
 
 >> cd ~/ccc
 
@@ -59,23 +72,60 @@ Put the following line in your .bash_profile or .profile file in your home folde
 
 export LD_LIBRARY_PATH=~/gsl19/lib:~/anaconda/lib:$LD_LIBRARY_PATH
 
-Now while you are in the ccc folder, do --
+5. Now while you are in the ccc folder, do --
 
 >> cd bin
 >> cp aXe_* ~/anaconda/variants/common/iraf/stsci_iraf/stsdas/bin.macosx/
 
 i.e. Copy the recompiled executables over to the directory that the pyraf code expects them to be in.
 
+6. Change the code in /Users/baj/anaconda/variants/common/iraf/stsci_iraf/stsdas/python/axe/axesrc/axelowlev.py
+
+6a. For the __init__ function of each class for an axe task you will have to add a line at the end of the function (inside the function) as such --
+self.command_list[0] = "/absolute/path/to/axe/binary"
+where you give it the entire path to the axe binary. In my case the path was,
+/Users/baj/anaconda/variants/common/iraf/stsci_iraf//stsdas/bin.macosx/aXe_*
+Basically, this tells it where to look for the aXe executable. Without this step it relies on the UR_DIR_PKG environment variable defined in your .bash_profile or .profile but in my case it was not expanding the variable correctly so I had to hard code in the absolute path.
+
+6b. Add "print(self.command_list)" before the "if silent:" (there aren't any quotes in either statement in the actual code) condition in the run function in the class TaskWrapper. In my case, this is the 1st class defined in axelowlev.py. 
+This is just to tell the user what the commmand list was that was passed to the python module subprocess which calls the actual axe binary. It will tell you if the code is looking for the axe binaries in the right place.
+
+7. Because the binaries were compiled with gsl 1.9 on my laptop where my username is bhavinjoshi (but the username on my work computer is baj), the code was looking for the dylib in /Users/bhavinjoshi/gsl19/lib/libgsl.0.dylib -- which obviously didn't exist. So I created a folder called bhavinjoshi in /Users/ and copied the compiled gsl19 folder in there. That seemed to get axecore to work.
+
+8. Lastly, if you don't have this already, then create a folder called iraf in your home directory and put your login.cl in it. This should allow you to start pyraf/iraf from anywhere on your system.
+----------------------------------------------------------------------------------------------------------------
+
+Workflow for the FIGS ACS parallels data -
+1. Create lists of matching grism and direct image pairs.
+i.e. find the matching G800L and F814W pairs
+ and find the matching G800L and F606W pairs
+ and find the matching G800L and F435W pairs
+
+Although, F435W is probably not as important as the other two. This is because the F435W filter (B band) has no overlap with the G800L grism wavelength coverage. So its not going to be useful when estimating contamination using FCUBEPREP. The output products from FCUBEPREP are used by axecore and the contamination estimate is eventually written out in the PET fits file.
+
+2. Put in the appropriate environment variables in your .bash_profile or .profile file in your home folder. 
+
+3. Create the required directory structure. Only create CONF and SAVE by hand. 
+The rest of the folders i.e. DRIZZLE, IMDRIZZLE, DATA, and OUTPUT will be field and position angle (PA) specific. So, name them (create and name them using your script that calls the axe tasks) in a way that tells you the field and PA. For example, for the parallel ACS field to GS1 PA28 I named my DATA folder DATA_gs1_28 and so on. Keep in mind that your Python script that calls axe tasks will have to change the environment variables to these specific names when you run it for a particular field and PA. 
+
+4. copy all the required files over to SAVE and IMDRIZZLE. Use the code called movefiles.py.
+
 5. Combine the dithered images for each filter using Astrodrizzle. You can do this in pyraf.
 
-6. Run SExtractor to generate a master catalog based on this drizzled image.
+6. First isolate the SCI and WHT extensions of the drizzle combined image. You can use imcopy in pyraf. See the command in the WFC3 cookbook.
+Also see the instructions in the WFC3 cookbook and modify the config.txt and default.param file for SExtractor accordingly.
+Run SExtractor to generate a master catalog based on this drizzled image.
 
-All the axe tasks after this point should be run from inside a python script. DO NOT use pyraf.
 7. Make sure to change MAG_AUTO to MAG_F0805 (for F814W) and accoringly for the other filters. The number after the F in MAG_F.... is in nanometers. This is the central/pivot wavelength of the filter.
 Run iolprep to map objects from the master catalog to the individual dithered images.
 
 8. Build input image lists. These have to be in a very specific format so be careful. Check the required format in the axe manual; it gives an example for a set of images for ACS. If you are working with WFC3 data take a look at the format in WFC3 axe cookbook (This one is easier because there's only a single chip).
+Use the code called create_axe_input_image_list.py.
 
+9. Copy the fits files from the SAVE directory to the DATA directory. Also copy the catalogs generated by iolprep to the DATA directory.
+See the instructions in the WFC3 cookbook for more details.
+
+All the axe tasks after this point should be run from inside a python script. DO NOT use pyraf.
 9. Run FCUBEPREP to get flux cubes. This is to get the contamination estimates right. axecore uses the output from FCUBEPREP to get the contamination estimates right.
 
 10. Run axecore. See the Python script that Nor sent (in Russell's email) and I modified a little. It is named axe_call.py and is in the ~/acspar/ folder. axecore generates the PET (Pixel Extraction Table) files that are required to do background subtraction and while drizzling grism images.
@@ -95,7 +145,8 @@ COUNT = TCOUNT - BCOUNT is the background subtracted COUNTS for the object at th
 flux is the flux in cgs units for the object at that pixel. This takes into account the sensitivity and gain to convert from counts.
 
 If axecore finished without any errors then you can be sure that you have axe working on your machine. Now it is okay to start with the actual reduction.
-------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
 
 Go through the steps up to running axecore once; now for all the files in a particular field with a particular PA.
 
