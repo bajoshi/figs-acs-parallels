@@ -1,0 +1,112 @@
+# Notes on getting axe ready to run
+
+The first thing you should do before you start doing any serious reduction on your data is to make sure that axe works as expected on your computer. This means going through all the necessary steps in your workflow.
+While you are going through the steps here in order to check if you have axe running you should probably run axecore only a single image and include only perhaps a couple objects in the direct image catalog to speed things up.
+
+Workflow for the FIGS ACS parallels data -
+1. Create lists of matching grism and direct image pairs.
+i.e. find the matching G800L and F814W pairs
+ and find the matching G800L and F606W pairs
+ and find the matching G800L and F435W pairs
+
+Although, F435W is probably not as important as the other two. This is because the F435W filter (B band) has no overlap with the G800L grism wavelength coverage. So its not going to be useful when estimating contamination using FCUBEPREP. The output products from FCUBEPREP are used by axecore and the contamination estimate is eventually written out in the PET fits file.
+
+2. Put in the appropriate environment variables in your .bash_profile or .profile file in your home folder. 
+
+3. Create the required directory structure. Only create CONF and SAVE by hand. 
+The rest of the folders i.e. DRIZZLE, IMDRIZZLE, DATA, and OUTPUT will be field and position angle (PA) specific. So, name them (create and name them using your script that calls the axe tasks) in a way that tells you the field and PA. For example, for the parallel ACS field to GS1 PA28 I named my DATA folder DATA_gs1_28 and so on. Keep in mind that your Python script that calls axe tasks will have to change the environment variables to these specific names when you run it for a particular field and PA. 
+
+4. Cross your fingers and hope that the mess on this step works! lol
+
+Make sure you have all the prerequiste software. It is preferable to use a single package manager. I used conda from anaconda.
+After you have anaconda installed using the graphical installer. Get the Python 2.7 version.
+
+>> conda config --add channels http://ssb.stsci.edu/astroconda
+>> conda install iraf pyraf stsci
+
+Add the following lines to your .bash_profile or .profile file in your home folder.
+
+export iraf=/Users/bhavinjoshi/anaconda/iraf/
+export IRAFARCH=macosx 
+# This could be macintel or something else depending on where conda put the axe executables. Check the directory structure in /Users/bhavinjoshi/anaconda/variants/common/iraf/stsci_iraf/stsdas/
+export UR_DIR_PKG=/Users/bhavinjoshi/anaconda/variants/common/
+
+aXe also depends on the GNU scientific library (GSL). You will need to install GSL if you don't have it already. On my computer aXe does not like to work with GSL version >= 2. So I've installed GSL version 1.9.
+To install GSL --
+a. Get the GSL *.tar.gz file from the GSL website and untar it.
+b. Put the untarred folder in your home directory (you can put it in any other place if you like).
+c. Run the following commands to install GSL --
+
+>> cd ~/gsl-1.9
+>> ./configure
+>> make
+>> ./configure prefix=/Users/bhavinjoshi/gsl19
+>> make
+>> make install
+
+Now, compile the axe executables with the compiled GSL version. The axe source code is in a folder called ccc in the home folder. 
+
+>> cd ~/ccc
+
+Edit the following lines in the makefile --
+CCFLAGS = -g -O2  -I/Users/bhavinjoshi/gsl19/include -I/Users/bhavinjoshi/anaconda/include -I/Users/bhavinjoshi/anaconda/lib -DHAVE_CONFIG_H -I/Users/bhavinjoshi/anaconda/include
+LDFLAGS =  -lcfitsio -lm  -L/Users/bhavinjoshi/gsl19/lib -L/Users/bhavinjoshi/anaconda/lib -lcfitsio /Users/bhavinjoshi/anaconda/lib/libwcs.a -L/Users/bhavinjoshi/anaconda/lib -lgsl -lgslcblas -lm
+
+>> make -f Makefile.osx clean
+>> make -f Makefile.osx
+
+Put the following line in your .bash_profile or .profile file in your home folder.
+
+export LD_LIBRARY_PATH=~/gsl19/lib:~/anaconda/lib:$LD_LIBRARY_PATH
+
+Now while you are in the ccc folder, do --
+
+>> cd bin
+>> cp aXe_* ~/anaconda/variants/common/iraf/stsci_iraf/stsdas/bin.macosx/
+
+i.e. Copy the recompiled executables over to the directory that the pyraf code expects them to be in.
+
+5. Combine the dithered images for each filter using Astrodrizzle. You can do this in pyraf.
+
+6. Run SExtractor to generate a master catalog based on this drizzled image.
+
+All the axe tasks after this point should be run from inside a python script. DO NOT use pyraf.
+7. Make sure to change MAG_AUTO to MAG_F0805 (for F814W) and accoringly for the other filters. The number after the F in MAG_F.... is in nanometers. This is the central/pivot wavelength of the filter.
+Run iolprep to map objects from the master catalog to the individual dithered images.
+
+8. Build input image lists. These have to be in a very specific format so be careful. Check the required format in the axe manual; it gives an example for a set of images for ACS. If you are working with WFC3 data take a look at the format in WFC3 axe cookbook (This one is easier because there's only a single chip).
+
+9. Run FCUBEPREP to get flux cubes. This is to get the contamination estimates right. axecore uses the output from FCUBEPREP to get the contamination estimates right.
+
+10. Run axecore. See the Python script that Nor sent (in Russell's email) and I modified a little. It is named axe_call.py and is in the ~/acspar/ folder. axecore generates the PET (Pixel Extraction Table) files that are required to do background subtraction and while drizzling grism images.
+This step will take a long time. Go do something else for a while...
+
+The PET file contains (among other stuff) for each BEAM i.e. for each grism spectrum order -- 
+p_x | p_y | d | TCOUNT | BCOUNT | COUNT | flux
+----|-----|---|--------|--------|-------|-----
+    |     |   |        |        |       |
+    |     |   |        |        |       |
+
+p_x and p_y are all the x and y pixel coordinates that are associated with a particular beam for a particular object.
+d is the distance perpendicular to the dispersion direction.
+TCOUNT is the counts for the object, at the given x,y pixel, which are NOT background subtracted.
+BCOUNT is the background count at the given x,y pixel. This will be 0 because you haven't done any background subtraction yet.
+COUNT = TCOUNT - BCOUNT is the background subtracted COUNTS for the object at that pixel.
+flux is the flux in cgs units for the object at that pixel. This takes into account the sensitivity and gain to convert from counts.
+
+If axecore finished without any errors then you can be sure that you have axe working on your machine. Now it is okay to start with the actual reduction.
+------------------------------------------------------------------------------------------------------------
+
+Go through the steps up to running axecore once; now for all the files in a particular field with a particular PA.
+
+11. Background subtraction --
+Refer to the handwritten notes.
+
+12. Fix the astrometry in the direct images. Use tweakreg in drizzlepac. You should probably use something deep (and with a large sky footprint) as a reference image, like from CANDELS.
+(You could also use SWARP instead of tweakreg.)
+
+13. Rerun axecore to get the corrected PET files. 
+
+14. Run the axecore PET files through your own code that combines the spectra from the individual grism images.
+
+These last 4 steps are an iterative process because the original PET files use the incorrect astrometry and they also have no background estimate. So the x,y pixels that it associates with an objects spectrum will not be entirely correct and also the counts will not be as correct as they can be. You may want to do axecore --> astrometry correction --> background sub --> axecore --> drizzle grism. i.e. do the astrometric corrections first because that will allow you to have the correct x,y pixels subtracted from the background when you do the background subtraction to the indivdual grism images.
