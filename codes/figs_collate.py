@@ -37,7 +37,8 @@ def create_lists(field, field_posangs, field_idx, posang_list, visit_id_list, fi
         mat_idx = np.where(temp == current_posang)[0] # Careful! Indices of a sub-array
 
         # Save filename pairs into files
-        fh_direct = open(acs_home + 'f606w_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
+        fh_606direct = open(acs_home + 'f606w_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
+        fh_814direct = open(acs_home + 'f814w_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
         fh_grism = open(acs_home + 'g800l_' + field + '_' + str(int(current_posang)) + '.lis', 'wa')
 
         for filename in filename_list[field_idx][mat_idx]:
@@ -52,12 +53,17 @@ def create_lists(field, field_posangs, field_idx, posang_list, visit_id_list, fi
                 fh_grism.write('\n')
 
             elif (filt1 == 'F606W') or (filt2 == 'F606W'):
-                fh_direct.write(filename)
-                fh_direct.write('\n')
+                fh_606direct.write(filename)
+                fh_606direct.write('\n')
+
+            elif (filt1 == 'F814W') or (filt2 == 'F814W'):
+                fh_814direct.write(filename)
+                fh_814direct.write('\n')
 
             h.close()
 
-        fh_direct.close()
+        fh_606direct.close()
+        fh_814direct.close()
         fh_grism.close()
 
     return None

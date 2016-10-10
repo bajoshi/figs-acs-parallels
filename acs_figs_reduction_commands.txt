@@ -140,4 +140,9 @@ _________________________________________________
 
 >>> axe2web --parfile axe2web_figs_acs.par
 
+________________________________________________________________________________________________________
+Running at STScI
+
+the python wrapper axelowlev.py had to be hacked. Every time it initializes an axe_task by calling its class, I had to put a line at the end that modified the first element in the command list. This had to be done to give it the absolute path to the axe_task. It wasn't expanding the environment variable UR_DIR_PKG properly so I had to hard code the location of the axe tasks in the class.
+
 
