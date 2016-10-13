@@ -29,6 +29,7 @@ if __name__ == '__main__':
 
     print "Will copy the following direct image files to IMDRIZZLE and SAVE"
     print fh.read().splitlines()
+    fh.seek(0)
     
     for file in fh.read().splitlines():
         
@@ -45,8 +46,10 @@ if __name__ == '__main__':
             print "Copying direct image", file, "from FLC directory to IMDRIZZLE"
             shutil.copy(flcdir + file, imdriz + file)
     
-    shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + '.lis')
+    if not os.path.isfile(imdriz + filt + '.lis'):
+        shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + field + posang + '.lis')
     print "\n"
+    fh.close()
     # this second copy line is required because the combined drizzled direct image will be made in the IMDRIZZLE folder
     
     # --------------------------------------------
@@ -58,8 +61,10 @@ if __name__ == '__main__':
     
     print "Will copy the following grism image files to IMDRIZZLE and SAVE"
     print fh.read().splitlines()
+    fh.seek(0)
 
     for file in fh.read().splitlines():
+        print file
 
         # Check if file exists and if it doesn't then copy it.
         if os.path.isfile(savdir + file):
@@ -74,8 +79,10 @@ if __name__ == '__main__':
             print "Copying grism image", file, "from FLC directory to IMDRIZZLE"
             shutil.copy(flcdir + file, imdriz + file)
 
-    shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + '.lis')
+    if not os.path.isfile(imdriz + filt + '.lis'):
+        shutil.copy(listdir + filt + field + posang + '.lis', imdriz + filt + field + posang + '.lis')
     print "\n"
+    fh.close()
     # this second copy line is required because the combined drizzled grism image will be made in the IMDRIZZLE folder
     
     sys.exit(0)
