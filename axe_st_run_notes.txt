@@ -41,6 +41,8 @@ See steps above to install anaconda and pyraf.
 >> cd
 >> conda install sextractor
 >> conda install pydrizzle
+(maybe also)
+(>> conda install wcstools)
 
 3. aXe also depends on the GNU scientific library (GSL). You will need to install GSL if you don't have it already. On my computer aXe does not like to work with GSL version >= 2. So I've installed GSL version 1.9.
 To install GSL --
