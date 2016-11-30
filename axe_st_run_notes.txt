@@ -125,7 +125,7 @@ example sextractor command:
 sex -c config.txt -WEIGHT_IMAGE f814w_gs1_28_wht.fits -MAG_ZEROPOINT 25.9466 -CATALOG_NAME f814w_gs1_28.cat f814w_gs1_28_sci.fits
 
 7. Make sure to change MAG_AUTO to MAG_F0805 (for F814W) and accoringly for the other filters. The number after the F in MAG_F.... is in nanometers. This is the central/pivot wavelength of the filter.
-Run iolprep to map objects from the master catalog to the individual dithered images.
+Run iolprep to map objects from the master catalog to the individual dithered images. iolprep can be run from inside pyraf. Check the WFC3 cookbook.
 
 8. Build input image lists. These have to be in a very specific format so be careful. Check the required format in the axe manual; it gives an example for a set of images for ACS. If you are working with WFC3 data take a look at the format in WFC3 axe cookbook (This one is easier because there's only a single chip).
 Use the code called create_axe_input_image_list.py.
