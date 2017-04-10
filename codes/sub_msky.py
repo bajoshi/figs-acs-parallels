@@ -30,6 +30,8 @@ if __name__ == '__main__':
 
     for grism_im in grism_im_list.read().splitlines():
 
+        print "working with image:", grism_im
+
         # open grism image
         fitsname = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im
     	grism_im_hdu = fits.open()
