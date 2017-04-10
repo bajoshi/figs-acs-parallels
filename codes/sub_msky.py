@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         # open grism image
         fitsname = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im
-    	grism_im_hdu = fits.open()
+    	grism_im_hdu = fits.open(fitsname)
 
         # find scale factor that optimizes chi2 and subtract
         num_a1 += np.sum(grism_im_hdu[4].data * msky_chip1 / grism_im_hdu[5].data**2)
