@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     	grism_im_hdu = fits.open(acspar + 'SAVE/' + grism_im)
 
-    	a1 = 
-    	a2 = 
+    	a1 
+    	a2  
 
     	grism_im_hdu[1].data = grism_im_hdu[1].data - a2 * msky_chip2
     	grism_im_hdu[4].data = grism_im_hdu[4].data - a1 * msky_chip1
