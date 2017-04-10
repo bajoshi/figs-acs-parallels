@@ -37,6 +37,8 @@ if __name__ == '__main__':
     	grism_im_hdu = fits.open(fitsname)
 
         # find scale factor that optimizes chi2 and subtract
+        num_a1, den_a1, num_a2, den_a2 = 0, 0, 0, 0
+
         num_a1 += np.sum(grism_im_hdu[4].data * msky_chip1 / grism_im_hdu[5].data**2)
         den_a1 += np.sum(msky_chip1**2 / grism_im_hdu[5].data**2)
 
