@@ -30,15 +30,21 @@ if __name__ == '__main__':
 
     for grism_im in grism_im_list.read().splitlines():
 
-    	grism_im_hdu = fits.open(acspar + 'SAVE/' + grism_im)
+    	grism_im_hdu = fits.open(acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im)
 
-    	a1 
-    	a2  
+        num_a1 += np.sum(grism_im_hdu[4].data * msky_chip1 / grism_im_hdu[5].data**2)
+        den_a1 += np.sum(msky_chip1**2 / grism_im_hdu[5].data**2)
+
+        num_a2 += np.sum(grism_im_hdu[1].data * msky_chip2 / grism_im_hdu[2].data**2)
+        den_a2 += np.sum(msky_chip2**2 / grism_im_hdu[2].data**2)
+
+    	a1 = num_a1 / den_a1
+    	a2 = num_a2 / den_a2
 
     	grism_im_hdu[1].data = grism_im_hdu[1].data - a2 * msky_chip2
     	grism_im_hdu[4].data = grism_im_hdu[4].data - a1 * msky_chip1
 
-    	grism_im_hdu.writeto(acspar + 'SAVE/' + grism_im, clobber=True)
+    	grism_im_hdu.writeto(acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im, clobber=True)
     	grism_im_hdu.close()
 
     sys.exit(0)
