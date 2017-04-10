@@ -30,8 +30,11 @@ if __name__ == '__main__':
 
     for grism_im in grism_im_list.read().splitlines():
 
-    	grism_im_hdu = fits.open(acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im)
+        # open grism image
+        fitsname = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im
+    	grism_im_hdu = fits.open()
 
+        # find scale factor that optimizes chi2 and subtract
         num_a1 += np.sum(grism_im_hdu[4].data * msky_chip1 / grism_im_hdu[5].data**2)
         den_a1 += np.sum(msky_chip1**2 / grism_im_hdu[5].data**2)
 
@@ -44,7 +47,8 @@ if __name__ == '__main__':
     	grism_im_hdu[1].data = grism_im_hdu[1].data - a2 * msky_chip2
     	grism_im_hdu[4].data = grism_im_hdu[4].data - a1 * msky_chip1
 
-    	grism_im_hdu.writeto(acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + grism_im, clobber=True)
+        # rewrite grism image
+    	grism_im_hdu.writeto(fitsname, clobber=True)
     	grism_im_hdu.close()
 
     sys.exit(0)
