@@ -18,10 +18,10 @@ if __name__ == '__main__':
     posang = '28'
 
     # read in catalog
-    names_header = ['num','mag','x','y','ra','dec','xw','yw','a_im','b_im','theta_im','theta_w','aw','bw']
+    names_header = ['num','mag','mag_err','re','x','y','ra','dec','xw','yw','a_im','b_im','theta_im','theta_w','aw','bw']
 
-    catfile = acspar + filt + '_' + field + '_' + posang + '.cat'
-    cat = np.genfromtxt(catfile, dtype=None, names=names_header, skip_header=14)
+    catfile = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + filt + '_' + field + '_' + posang + '.cat'
+    cat = np.genfromtxt(catfile, dtype=None, names=names_header, skip_header=16)
 
     # figure out which indices you want to keep
     # Important to clip using physical pixels instead 
@@ -43,21 +43,23 @@ if __name__ == '__main__':
 
     # loop over catalog and rewrite the valid entries after writing the header
     sextractor_header = "# 1  NUMBER  Running object number" + "\n" +\
-                        "# 2  MAG_F0805  Kron-like elliptical aperture magnitude  [mag]" + "\n" +\
-                        "# 3  X_IMAGE  Object position along x  [pixel]" + "\n" +\
-                        "# 4  Y_IMAGE  Object position along y  [pixel]" + "\n" +\
-                        "# 5  ALPHA_J2000  Right ascension of barycenter (J2000)  [deg]" + "\n" +\
-                        "# 6  DELTA_J2000  Declination of barycenter (J2000)  [deg]" + "\n" +\
-                        "# 7  X_WORLD  Barycenter position along world x axis  [deg]" + "\n" +\
-                        "# 8  Y_WORLD  Barycenter position along world y axis  [deg]" + "\n" +\
-                        "# 9  A_IMAGE  Profile RMS along major axis  [pixel]" + "\n" +\
-                        "# 10 B_IMAGE  Profile RMS along minor axis  [pixel]" + "\n" +\
-                        "# 11 THETA_IMAGE  Position angle (CCW/x)  [deg]" + "\n" +\
-                        "# 12 THETA_WORLD  Position angle (CCW/world-x)  [deg]" + "\n" +\
-                        "# 13 A_WORLD  Profile RMS along major axis (world units)  [deg]" + "\n" +\
-                        "# 14 B_WORLD  Profile RMS along minor axis (world units)  [deg]"
+                        "# 2  MAG_F814W  Kron-like elliptical aperture magnitude  [mag]" + "\n" +\
+                        "# 3  MAGERR_AUTO  RMS error for AUTO magnitude  [mag]" + "\n" +\
+                        "# 4  FLUX_RADIUS  Fraction-of-light radii  [pixel]" + "\n" +\
+                        "# 5  X_IMAGE  Object position along x  [pixel]" + "\n" +\
+                        "# 6  Y_IMAGE  Object position along y  [pixel]" + "\n" +\
+                        "# 7  ALPHA_J2000  Right ascension of barycenter (J2000)  [deg]" + "\n" +\
+                        "# 8  DELTA_J2000  Declination of barycenter (J2000)  [deg]" + "\n" +\
+                        "# 9  X_WORLD  Barycenter position along world x axis  [deg]" + "\n" +\
+                        "# 10  Y_WORLD  Barycenter position along world y axis  [deg]" + "\n" +\
+                        "# 11  A_IMAGE  Profile RMS along major axis  [pixel]" + "\n" +\
+                        "# 12 B_IMAGE  Profile RMS along minor axis  [pixel]" + "\n" +\
+                        "# 13 THETA_IMAGE  Position angle (CCW/x)  [deg]" + "\n" +\
+                        "# 14 THETA_WORLD  Position angle (CCW/world-x)  [deg]" + "\n" +\
+                        "# 15 A_WORLD  Profile RMS along major axis (world units)  [deg]" + "\n" +\
+                        "# 16 B_WORLD  Profile RMS along minor axis (world units)  [deg]"
 
-    catname = acspar + os.path.basename(catfile).split('.')[0] + '_clipped.cat'
+    catname = catfile.replace('.cat', '_prep.cat')
     fh = open(catname, 'wa')
     
     fh.write(sextractor_header)
