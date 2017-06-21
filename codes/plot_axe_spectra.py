@@ -2,6 +2,7 @@ from __future__ import division
 
 import numpy as np
 from astropy.io import fits
+from astropy.visualization import (ZScaleInterval, LogStretch, ImageNormalize)
 
 import os
 import sys
@@ -10,6 +11,7 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.backends.backend_pdf import PdfPages
+from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
 home = os.getenv('HOME')  # Does not have a trailing slash at the end
 figs_acs_dir = home + '/Desktop/FIGS/figs-acs-parallels/'
@@ -67,9 +69,19 @@ if __name__ == '__main__':
     field = 'gs1'
     posang = '28'
 
+    # read in catalog to apply magnitude cuts
+    names_header = ['num','mag','mag_err','re','x','y','ra','dec','xw','yw','a_im','b_im','theta_im','theta_w','aw','bw']
+
+    catfile = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + dir_filt + '_' + field + '_' + posang + '.cat'
+    cat = np.genfromtxt(catfile, dtype=None, names=names_header, skip_header=16)
+
+    # read in science image    
+    sci_im_name = acspar + 'IMDRIZZLE_' + field + '_' + posang + '/' + dir_filt + '_' + field + '_' + posang + '_sci.fits'
+    sci_im = fits.open(sci_im_name)
+
     # Create grid for making grid plots
-    gs = gridspec.GridSpec(15,15)
-    gs.update(left=0.1, right=0.9, bottom=0.1, top=0.9, wspace=0.0, hspace=0.2)
+    gs = gridspec.GridSpec(3,1, height_ratios=[1,0.05,0.3], width_ratios=[1])
+    gs.update(left=0.1, right=0.9, bottom=0.1, top=0.9, wspace=0.02, hspace=0.02)
 
     # open lists
     gr_im_file = open(acspar + gr_filt + '_' + dir_filt + '_' + field + '_' + posang + '.lis', 'r')
@@ -138,33 +150,79 @@ if __name__ == '__main__':
 
                 if 'A' == extname[-1]:
 
-                    print "plotting", extname, "on chip", chip, "in grism image", gr_basename
+                    obj_id = int(extname.split('BEAM_')[-1].split('A')[0])
+                    obj_idx = np.where(cat['num'] == obj_id)[0]
 
-                    fig = plt.figure()
+                    f814w_mag = float(cat['mag'][obj_idx])
 
-                    ax1 = fig.add_subplot(gs[:10,:])
-                    ax2 = fig.add_subplot(gs[10:,:])
+                    if f814w_mag <= 19:
 
-                    lam = spcfile[extname].data['LAMBDA']
-                    flam = spcfile[extname].data['FLUX']
-                    ferr = spcfile[extname].data['FERROR']
-                    contam = spcfile[extname].data['CONTAM']
+                        print "plotting", extname, "on chip", chip, "in grism image", gr_basename,\
+                         "with F814W mag", f814w_mag
 
-                    flam -= contam
+                        # get stamp image
+                        pix_x = cat['x'][obj_idx]
+                        pix_y = cat['y'][obj_idx]
+                        arr_x = pix_y - 1
+                        arr_y = pix_x - 1
+                        width = spcfile[extname].header['WIDTH']
+                        width += 1.25*width
 
-                    ax1.plot(lam, flam, '-', color='k')
-                    ax1.fill_between(lam, flam + ferr, flam - ferr, color='lightgray')
+                        stamp = sci_im[0].data[arr_x-width:arr_x+width+1, arr_y-width:arr_y+width+1]
 
-                    ax1.set_yscale('log')
+                        # plot figure
+                        fig = plt.figure()
 
-                    ax2.imshow(stpfile[extname].data, origin='lower', cmap='magma')
+                        ax1 = fig.add_subplot(gs[0,0])
+                        ax2 = fig.add_subplot(gs[2,0])
 
-                    pdf.savefig(bbox_inches='tight')
-                    plt.show()
+                        lam = spcfile[extname].data['LAMBDA']
+                        flam = spcfile[extname].data['FLUX']
+                        ferr = spcfile[extname].data['FERROR']
+                        contam = spcfile[extname].data['CONTAM']
 
-                    plt.clf()
-                    plt.cla()
-                    plt.close()
+                        flam -= contam
+
+                        # plot 1d spectrum
+                        ax1.plot(lam, flam, '-', color='k')
+                        ax1.fill_between(lam, flam + ferr, flam - ferr, color='lightgray')
+
+                        lam_low = 5500
+                        lam_high = 10000
+
+                        lam_low_idx = np.argmin(abs(lam-lam_low))
+                        lam_high_idx = np.argmin(abs(lam-lam_high))
+
+                        ax1.set_xlim(lam_low, lam_high)
+                        ax1.set_ylim(np.nanmin(flam[lam_low_idx:lam_high_idx+1]), np.nanmax(flam[lam_low_idx:lam_high_idx+1]))
+
+                        ax1.minorticks_on()
+                        ax1.tick_params('both', width=1, length=3, which='minor')
+                        ax1.tick_params('both', width=1, length=4.7, which='major')
+
+                        # plot inset stamp image
+                        ax_inset = inset_axes(ax1,
+                                            width="30%", # width = 30% of parent_bbox
+                                            height=0.5, # height : 1 inch 
+                                            loc=1)
+
+                        norm = ImageNormalize(stamp, interval=ZScaleInterval(), stretch=LogStretch())
+
+                        ax_inset.imshow(stamp, origin='lower', cmap='Greys', norm=norm)
+                        ax_inset.get_xaxis().set_ticklabels([])
+                        ax_inset.get_yaxis().set_ticklabels([])
+
+                        # plot 2d spectrum
+                        twod_spec = stpfile[extname].data
+                        norm = ImageNormalize(twod_spec, interval=ZScaleInterval(), stretch=LogStretch())
+                        ax2.imshow(twod_spec, origin='lower', cmap='Greys', aspect='auto', norm=norm)
+
+                        pdf.savefig(bbox_inches='tight')
+                        #plt.show()
+
+                        plt.clf()
+                        plt.cla()
+                        plt.close()
 
         pdf.close()
         break
