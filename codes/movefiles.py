@@ -6,6 +6,12 @@ import shutil
 home = os.getenv('HOME')  # Does not have a trailing slash at the end
 acs_home = home + '/Desktop/FIGS/figs-acs-parallels/'
 
+def check_files_in_dir(fh, savdir):
+
+    #for fl in fh.read().splitlines():
+
+    return None
+
 if __name__ == '__main__':
 
     # Change these two variables below depending on the field and PA you are working with.
@@ -33,6 +39,12 @@ if __name__ == '__main__':
     
     for file in fh.read().splitlines():
         
+        if not os.path.isdir(flcdir):
+            #check_files_in_dir(fh, savdir)
+            #fh.seek(0)
+            print "No folder found on external backup drive. Looking in SAVE folder.", "\n"
+            flcdir = savdir
+
         # Check if file exists and if it doesn't then copy it.
         if os.path.isfile(savdir + file):
             print file, "exists in SAVE. Checking IMDRIZZLE next."
@@ -64,6 +76,12 @@ if __name__ == '__main__':
     fh.seek(0)
 
     for file in fh.read().splitlines():
+
+        if not os.path.isdir(flcdir):
+            #check_files_in_dir(fh, savdir)
+            #fh.seek(0)
+            print "No folder found on external backup drive. Looking in SAVE folder.", "\n"
+            flcdir = savdir
 
         # Check if file exists and if it doesn't then copy it.
         if os.path.isfile(savdir + file):
