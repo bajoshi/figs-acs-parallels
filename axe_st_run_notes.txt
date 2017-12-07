@@ -27,6 +27,10 @@ export iraf=/Users/baj/anaconda/iraf/
 export IRAFARCH=macosx
 # irafarch could be macintel or something else depending on where conda put the axe executables. Check the directory structure in /Users/bhavinjoshi/anaconda/variants/common/iraf/stsci_iraf/stsdas/
 export UR_DIR_PKG=/Users/baj/anaconda/variants/common/
+
+3. If pyraf says that you don't have a login.cl then you need to do
+>> mkiraf
+and then when it asks you for terminal type setting you want it to be --> xgterm
 ----------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------
