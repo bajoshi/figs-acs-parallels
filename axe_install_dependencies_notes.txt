@@ -1,0 +1,92 @@
+# Notes on getting axe ready to run
+
+In these notes, the username is always bhavinjoshi or baj. Change it according to whatever it is on your system.
+
+----------------------------------------------------------------------------------------------------------------
+############## ANACONDA ##############
+If you have any older versions of scisoft, Ureka, or iraf on your computer, you should remove them.
+If you set up anaconda with environments then you should remove anaconda too and reinstall it. Now just install all packages in the "root" environment i.e. you shouldn't have to source activate anything. 
+
+0. If you have an older version of anaconda with environments set up then do --
+>> cd
+>> rm -fr anaconda
+(this takes a while. Its a big folder with many files.)
+
+To install anaconda and the relevant packages --
+1. Get the graphical installer with Python 2.7 and run it.
+2. Then do --
+>> conda config --add channels http://ssb.stsci.edu/astroconda
+>> conda install iraf pyraf stsci
+(this also takes a while.)
+
+Add the following lines to your .bash_profile or .profile file in your home folder.
+export iraf=/Users/baj/anaconda/iraf/
+export IRAFARCH=macosx
+# irafarch could be macintel or something else depending on where conda put the axe executables. Check the directory structure in /Users/bhavinjoshi/anaconda/variants/common/iraf/stsci_iraf/stsdas/
+export UR_DIR_PKG=/Users/baj/anaconda/variants/common/
+
+3. If pyraf says that you don't have a login.cl then you need to do
+>> mkiraf
+and then when it asks you for terminal type setting you want it to be --> xgterm
+----------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------
+############## OTHER PREREQUISTES ##############
+
+1. You will also need SExtractor and pydrizzle which do not come with the anaconda pyraf stsci install by default. You can get them by doing --
+>> cd
+>> conda install sextractor
+>> conda install pydrizzle
+(and maybe also...)
+(>> conda install wcstools)
+
+2. aXe also depends on the GNU scientific library (GSL). You will need to install GSL if you don't have it already. On my computer aXe does not like to work with GSL version >= 2. So I've installed GSL version 1.9.
+To install GSL --
+a. Get the GSL *.tar.gz file from the GSL website and untar it.
+b. Put the untarred folder in your home directory (you can put it in any other place if you like).
+c. Run the following commands to install GSL --
+
+>> cd ~/gsl-1.9
+>> ./configure
+>> make
+>> ./configure prefix=/Users/bhavinjoshi/gsl19
+>> make
+>> make install
+(these steps to compile gsl will take a little time.)
+
+3. Now, compile the axe executables with the compiled GSL version. (If you already have the compiled binaries then skip forward to step 4 and simply put the axe compiled files in the anaconda folder as below.)
+
+The axe source code is in a folder called ccc in the home folder. 
+(I have not been able to compile the axe source code again. I simply copied and used the compiled binaries from my laptop which were compiled with gsl 1.9)
+
+>> cd ~/ccc
+
+Edit the following lines in the makefile --
+CCFLAGS = -g -O2  -I/Users/bhavinjoshi/gsl19/include -I/Users/bhavinjoshi/anaconda/include -I/Users/bhavinjoshi/anaconda/lib -DHAVE_CONFIG_H -I/Users/bhavinjoshi/anaconda/include
+LDFLAGS =  -lcfitsio -lm  -L/Users/bhavinjoshi/gsl19/lib -L/Users/bhavinjoshi/anaconda/lib -lcfitsio /Users/bhavinjoshi/anaconda/lib/libwcs.a -L/Users/bhavinjoshi/anaconda/lib -lgsl -lgslcblas -lm
+
+>> make -f Makefile.osx clean
+>> make -f Makefile.osx
+
+Put the following line in your .bash_profile or .profile file in your home folder.
+
+export LD_LIBRARY_PATH=~/gsl19/lib:~/anaconda/lib:$LD_LIBRARY_PATH
+
+4. Now while you are in the ccc folder, do --
+
+>> cd bin
+>> cp aXe_* ~/anaconda/variants/common/iraf/stsci_iraf/stsdas/bin.macosx/
+
+i.e. Copy the recompiled executables over to the directory that the pyraf code expects them to be in.
+
+5. Change the code in /Users/baj/anaconda/variants/common/iraf/stsci_iraf/stsdas/python/axe/axesrc/axelowlev.py
+
+5a. For the __init__ function of each class for an axe task you will have to add a line at the end of the function (inside the function) as such --
+self.command_list[0] = "/absolute/path/to/axe/binary"
+where you give it the entire path to the axe binary. In my case the path was,
+/Users/baj/anaconda/variants/common/iraf/stsci_iraf//stsdas/bin.macosx/aXe_*
+Basically, this tells it where to look for the aXe executable. Without this step it relies on the UR_DIR_PKG environment variable defined in your .bash_profile or .profile but in my case it was not expanding the variable correctly so I had to hard code in the absolute path.
+
+5b. Add "print(self.command_list)" before the "if silent:" (there aren't any quotes in either statement in the actual code) condition in the run function in the class TaskWrapper. In my case, this is the 1st class defined in axelowlev.py. 
+This is just to tell the user what the commmand list was that was passed to the python module subprocess which calls the actual axe binary. It will tell you if the code is looking for the axe binaries in the right place.
+
